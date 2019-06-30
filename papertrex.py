@@ -116,7 +116,7 @@ class Papertrex(Bittrex):
     def __init__(self, apikey: str, secret: str, rate_limit: int = 5, account_name: str = 'NOT_PRIVODED',
                  http_keep_alive: bool = False, understood=""):
         super().__init__(apikey, secret, rate_limit, account_name, http_keep_alive, understood)
-        self.orders: List[CompleteOrder] = []
+        self._orders: List[CompleteOrder] = []
         self._spawn_order_issue_agent()
 
     def _spawn_order_issue_agent(self):
@@ -196,7 +196,7 @@ class Papertrex(Bittrex):
     def _order_issue_agent(self):
         while True:
             time.sleep(20)
-            open_orders = [o for o in self.orders if o.Closed is None]
+            open_orders = [o for o in self._orders if o.Closed is None]
             for o in open_orders:
                 age = now().timestamp() - self._parse_dt(o.Opened).timestamp()
                 what_to_do = self._what_to_do_with_order(o, age)
@@ -242,7 +242,7 @@ class Papertrex(Bittrex):
         co.IsOpen: bool = True
         co.Sentinel: str = "sentinel"
 
-        self.orders.append(co)
+        self._orders.append(co)
         return False, response
 
     def sell_limit(self, market, quantity, sell_price) -> Tuple[Any, Optional[BittrexSellLimit]]:
@@ -276,12 +276,12 @@ class Papertrex(Bittrex):
         co.IsOpen: bool = True
         co.Sentinel: str = "sentinel"
 
-        self.orders.append(co)
+        self._orders.append(co)
         return False, response
 
     def cancel(self, order_uuid) -> Tuple[Any, bool]:
         order = None
-        for o in self.orders:
+        for o in self._orders:
             if o.Uuid == order_uuid:
                 order = o
                 break
@@ -299,20 +299,21 @@ class Papertrex(Bittrex):
         return "Order not found to cancel", False
 
     def get_open_orders(self, market=None) -> Tuple[Any, List[BittrexOpenOrder]]:
-        result: List[BittrexOpenOrder] = []
-        for order in self.orders:
-            if order.Closed is None:
-                result.append(self._to_open_order(order))
-            # if market is None:
-            #     result.append(self.to_open_order(order))
-            # elif order.Exchange == market:
-            #     result.append(self.to_open_order(order))
+        result: List[BittrexOpenOrder] = [self._to_open_order(order) for order in self._orders if order.Closed is None]
+
+        # for order in self._orders:
+        #     if order.Closed is None:
+        #         result.append(self._to_open_order(order))
+        # if market is None:
+        #     result.append(self.to_open_order(order))
+        # elif order.Exchange == market:
+        #     result.append(self.to_open_order(order))
 
         return False, result
 
     def get_order(self, order_uuid) -> Tuple[Any, Optional[BittrexOrder]]:
         result: Optional[BittrexOrder] = None
-        for order in self.orders:
+        for order in self._orders:
             if order.Uuid == order_uuid:
                 result = self._to_order(order)
                 break

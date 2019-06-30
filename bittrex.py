@@ -361,10 +361,10 @@ class Bittrex:
                                      url.encode(),
                                      hashlib.sha512).hexdigest()
                 headers = {'apisign': signature}
-                print('nonce=', nonce)
-                print('apisign=', signature)
-                print('headers:', headers)
-                print('url:', url)
+                # print('nonce=', nonce)
+                # print('apisign=', signature)
+                # print('headers:', headers)
+                # print('url:', url)
                 # exit(0)
             else:
                 headers = {}
@@ -630,10 +630,10 @@ class Bittrex:
             else:
                 print('Panic sell order for {} is successful.'.format(currency))
 
-    def get_balances_dict(self):
+    def get_balances_dict(self) -> Tuple[Optional[Any], Optional[dict]]:
         err, balances = self.get_balances()
         if err:
-            return err, balances
+            return err, None
 
         balances_dict = {}
 
